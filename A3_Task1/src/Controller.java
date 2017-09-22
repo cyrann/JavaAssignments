@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Controller {
@@ -9,27 +10,32 @@ public class Controller {
     boolean displayFlag = false;
     int marker = 0; //
     int direction;
-    ArrayList<Tuple> moveStep = new ArrayList<Tuple>();
+    ArrayList<Tuple> moveStep = new ArrayList<Tuple>(); //let the first index to be[0,[0,0]]
     int arrayX;
     int arrayY;
 
     class Tuple {
         int marker = 0;
-        int direction = 0;
-        int step = 0;
+        int x = 0;
+        int y = 0;
+        Tuple position;
 
-        Tuple(int marker, int direction, int step) {
+        Tuple(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        Tuple(int marker, Tuple t){
             this.marker = marker;
-            this.direction = direction;
-            this.step = step;
+            this.position = t;
         }
 
     }
 
     ArrayList processCommand(Playground pg) {
+        moveStep.add(new Tuple(0, new Tuple(0, 0)));
         while (inputFlag) {
-            System.out.println("Enter command:");
-            action = reader.nextInt();
+            inputCommand();
             takeAction(pg);
         }
         return moveStep;
@@ -53,11 +59,10 @@ public class Controller {
                 changeDirection(-1);
                 break;
             case (5):
-                System.out.println("Enter forward spaces:");
-                step = reader.nextInt();
+                inputStep();
                 int tempStep = reachBound(pg);
                 forwardSpace(direction, tempStep);
-                Tuple t = new Tuple(marker, direction, tempStep);
+                Tuple t = new Tuple(marker, new Tuple(arrayX, arrayY));   // add marker, and position to the Arraylist.
                 moveStep.add(t);
                 break;
             case (6):
@@ -66,6 +71,8 @@ public class Controller {
             case (9):
                 inputFlag = false;
                 break;
+            default:
+                System.out.println("Wrong command! Please check and enter again.");
 
         }
 
@@ -116,6 +123,38 @@ public class Controller {
                 break;
         }
 
+
+    }
+
+    void inputCommand(){
+        boolean i = false;
+        while (i == false){
+                try {
+                    System.out.println("Enter Command:");
+                    action = reader.nextInt();
+                    i = true;
+                }
+                catch(InputMismatchException e){
+                    System.out.println("Make sure you input an integer! Please try again.");
+                    reader.nextLine();
+                }
+        }
+
+    }
+
+    void inputStep(){
+        boolean i = false;
+        while (i == false){
+            try {
+                System.out.println("Enter forward spaces:");
+                step = reader.nextInt();
+                i = true;
+            }
+            catch(InputMismatchException e){
+                System.out.println("Make sure you input an integer!Re-enter please:");
+                reader.nextLine();
+            }
+        }
 
     }
 }
