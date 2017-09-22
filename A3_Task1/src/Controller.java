@@ -8,14 +8,14 @@ public class Controller {
     int action = 0; // action to take
     boolean inputFlag = true;
     boolean displayFlag = false;
-    int marker = 0; //
+    boolean marker = false; //
     int direction;
     ArrayList<Tuple> moveStep = new ArrayList<Tuple>(); //let the first index to be[0,[0,0]]
     int arrayX;
     int arrayY;
 
     class Tuple {
-        int marker = 0;
+        boolean marker = false;
         int x = 0;
         int y = 0;
         Tuple position;
@@ -25,7 +25,7 @@ public class Controller {
             this.y = y;
         }
 
-        Tuple(int marker, Tuple t){
+        Tuple(boolean marker, Tuple t){
             this.marker = marker;
             this.position = t;
         }
@@ -33,7 +33,7 @@ public class Controller {
     }
 
     ArrayList processCommand(Playground pg) {
-        moveStep.add(new Tuple(0, new Tuple(0, 0)));
+        moveStep.add(new Tuple(false, new Tuple(0, 0)));
         while (inputFlag) {
             inputCommand();
             takeAction(pg);
@@ -47,10 +47,10 @@ public class Controller {
 
         switch (action) {
             case (1):
-                marker = 0;
+                marker = false;
                 break;
             case (2):
-                marker = 1;
+                marker = true;
                 break;
             case (3):
                 changeDirection(1);
