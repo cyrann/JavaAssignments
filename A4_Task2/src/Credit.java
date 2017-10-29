@@ -7,7 +7,6 @@ public class Credit extends Payment implements Authorization, Serializable {
     private String number;
     private String type;
     private Date expDate;
-    private double amount;
 
     Credit(String n, String t, String d, double a){
         number = n;

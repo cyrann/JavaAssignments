@@ -5,34 +5,43 @@ public class Menu{
     List<Customer> customerList = new ArrayList();
     List<Item> itemList = new ArrayList();
     List<Order> orderList = new ArrayList();
-    int countCustomer;
-    int countItem;
-    int countOrder;
+//    int countCustomer;
+//    int countItem;
+//    int countOrder;
+
+    Menu(){
+        readCustomer();
+        readItem();
+        readOrder();
+        System.out.println("\nInformation of customer, item and order loaded.\n");
+    }
 
     void displayReceipt(Order order){
         order.printOrder();
     }
 
     void displayOrderSummary(){
-        readOrder();
         for(Order order: orderList){
             order.summarizeOrder();
         }
     }
 
     void displayMenu(){
-        System.out.println("Fruit Juice Management System");
+        System.out.println("-----Fruit Juice Management System-----");
         System.out.println("1.Register the items.\n" +
                 "2.Register the customers.\n" +
                 "3.Make an order.\n" +
                 "4.Display order summary.\n" +
-                "5.Quit");
+                "5.Export the customer information.\n" +
+                "6.Export the item information.\n" +
+                "7.Export the order information.\n" +
+                "8.Quit the system.\n");
         takeCommand();
     }
 
     void takeCommand(){
         System.out.println("Input the number of your command:");
-        int command = CheckInput.inputInt(1,5);
+        int command = CheckInput.inputInt(1,8);
         switch (command){
             case 1:
                 registerItem();
@@ -51,6 +60,18 @@ public class Menu{
                 displayMenu();
                 break;
             case 5:
+                exportCustomer(customerList);
+                displayMenu();
+                break;
+            case 6:
+                exportItem(itemList);
+                displayMenu();
+                break;
+            case 7:
+                exportOrder(orderList);
+                displayMenu();
+                break;
+            case 8:
                 break;
         }
     }
@@ -60,13 +81,15 @@ public class Menu{
         List oList = new ArrayList();
         String conOrder;
 
-        readCustomer();
         Order.setCustomerList(customerList);
-        readItem();
         OrderDetail.setList(itemList);
 
         do {
-            System.out.println("Input the customer id:");
+            System.out.println("Input the customer ID from the index:");
+            System.out.printf("%-5s%-15s\n", "ID", "Name");
+            for (Customer c : customerList){
+                System.out.printf("%-5s%-15s\n", c.getId(), c.getName());
+            }
             id = CheckInput.inputInt();
 
             Order order = new Order(new Date(), id);
@@ -74,6 +97,7 @@ public class Menu{
             order.addPayment();
 
             oList.add(order);
+            orderList.add(order);
 
             displayReceipt(order);
 
@@ -82,8 +106,6 @@ public class Menu{
 
         }
         while (conOrder.equals("y"));
-
-        exportOrder(oList);
 
     }
 
@@ -98,8 +120,8 @@ public class Menu{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            countOrder += 1;
         }
+        System.out.println("Order information exported.");
         try {
             output.close();
         } catch (IOException e) {
@@ -112,24 +134,30 @@ public class Menu{
     void readOrder(){
         String fileName = "order.txt";
         File file = new File(fileName);
-        ObjectInputStream input = null;
-        try {
-            input = new ObjectInputStream(new FileInputStream(file));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        Order o = null;
-
-        for( int i = 0; i < countOrder; i ++){
+        if (file.exists()){
+            ObjectInputStream input = null;
             try {
-                o = (Order) input.readObject();
+                input = new ObjectInputStream(new FileInputStream(file));
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
             }
-            orderList.add(o);
+
+            Order o = null;
+
+            boolean flag = true;
+            while (flag){
+                try {
+                    o = (Order) input.readObject();
+                    orderList.add(o);
+                } catch (EOFException e) {
+                    flag = false;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+
+            }
         }
 
     }
@@ -142,11 +170,25 @@ public class Menu{
         List cList = new ArrayList();
 
         String conReg;
+        boolean repeat = false;
         do {
             Customer customer = new Customer();
 
             System.out.println("Input the customer id:");
             id = CheckInput.inputInt();
+            do {
+                for (int i = 0; i < customerList.size(); i++) {
+                    if (id == customerList.get(i).getId()) {
+                        repeat = true;
+                        System.out.println("ID already existed. Input the customer ID again:");
+                        id = CheckInput.inputInt();
+                        break;
+                    }
+                    else repeat = false;
+                }
+            }
+            while (repeat);
+
             customer.setId(id);
 
             System.out.println("Input the customer name:");
@@ -158,6 +200,7 @@ public class Menu{
             customer.setAddress(address);
 
             cList.add(customer);
+            customerList.add(customer);
 
             System.out.println("Continue to register another customer?(y/n)");
             conReg = CheckInput.inputString("n", "y");
@@ -165,7 +208,7 @@ public class Menu{
         }
         while (conReg.equals("y"));
 
-        exportCustomer(cList);
+//        exportCustomer(cList);
     }
 
     void exportCustomer(List customerList){
@@ -180,8 +223,8 @@ public class Menu{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            countCustomer += 1;
         }
+        System.out.println("Customer information exported.");
         try {
             output.close();
         } catch (IOException e) {
@@ -194,26 +237,30 @@ public class Menu{
     void readCustomer(){
         String fileName = "customer.txt";
         File file = new File(fileName);
-        ObjectInputStream input = null;
-        try {
-            input = new ObjectInputStream(new FileInputStream(file));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        Customer c = null;
-
-        for( int i = 0; i < countCustomer; i ++){
+        if (file.exists()){  //read the file if it exists.
+            ObjectInputStream input = null;
             try {
-                c = (Customer) input.readObject();
+                input = new ObjectInputStream(new FileInputStream(file));
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
             }
-            customerList.add(c);
-        }
 
+            Customer c = null;
+
+            boolean flag = true;
+            while(flag){
+                try {
+                    c = (Customer) input.readObject();
+                    customerList.add(c);
+                } catch (EOFException e) {
+                    flag = false;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     void registerItem(){
@@ -224,12 +271,25 @@ public class Menu{
         String desc;
         double poq;
         String conReg;
+        boolean repeat = false;
         do {
             Item item = new Item();
 
 
             System.out.println("Input the juice No.:");
             no = CheckInput.inputInt();
+            do {
+                for (int i = 0; i < itemList.size(); i++) {
+                    if (no == itemList.get(i).getJuiceNo()) {
+                        repeat = true;
+                        System.out.println("No. already existed. Input the juice No. again:");
+                        no = CheckInput.inputInt();
+                        break;
+                    }
+                    else repeat = false;
+                }
+            }
+            while (repeat);
             item.setJuiceNo(no);
 
             System.out.println("Input the juice name:");
@@ -245,6 +305,7 @@ public class Menu{
             item.setPriceForQuantity(poq);
 
             iList.add(item);
+            itemList.add(item);
 
             System.out.println("Continue to register another juice?(y/n)");
             conReg = CheckInput.inputString("n", "y");
@@ -252,7 +313,7 @@ public class Menu{
 
         }
         while (conReg.equals("y"));
-        exportItem(iList);
+//        exportItem(iList);
     }
 
     void exportItem(List itemList){
@@ -266,8 +327,8 @@ public class Menu{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            countItem += 1;
         }
+        System.out.println("Item information exported.");
         try {
             output.close();
         } catch (IOException e) {
@@ -278,24 +339,30 @@ public class Menu{
     void readItem(){
         String fileName = "item.txt";
         File file = new File(fileName);
-        ObjectInputStream input = null;
-        try {
-            input = new ObjectInputStream(new FileInputStream(file));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        Item item = null;
-
-        for( int i = 0; i < countItem; i ++){
+        if (file.exists()){  //read the file if it exists.
+            ObjectInputStream input = null;
             try {
-                item = (Item) input.readObject();
+                input = new ObjectInputStream(new FileInputStream(file));
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
             }
-            itemList.add(item);
+
+            Item item = null;
+
+            boolean flag = true;
+            while (flag){
+                try {
+                    item = (Item) input.readObject();
+                    itemList.add(item);
+                } catch (EOFException e) {
+                    flag = false;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+
+            }
         }
 
     }

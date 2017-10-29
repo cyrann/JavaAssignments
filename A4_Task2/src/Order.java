@@ -63,23 +63,24 @@ public class Order implements Serializable{
     }
 
     void summarizeOrder(){
-        System.out.printf("%-6s%-10s%-6.2f%-%6.2f", "Date", "Customer", "Total", "Tax");
-        System.out.printf("%-6s%-10s%-6.2f%-%6.2f", date.toString().substring(4,10), customer.getName(), calcTotal(), calcTax());
+        System.out.printf("%-10s%-10s%-10s%-10s%-10s\n", "Date", "Customer", "Total", "Tax", "Status");
+        System.out.printf("%-10s%-10s%-10.2f%-10.2f%-10s\n", date.toString().substring(4,10), customer.getName(), calcTotal(), calcTax(), getStatus());
     }
 
     void printOrder(){
+        System.out.println("----------Receipt----------");
         System.out.println("Time: " + date.toString() +
                 "\nCustomer ID: " + customer.getId() +
                 "\nCustomer Name: " + customer.getName() +
                 "\nPayment: ");
         if (cash != null){
-            System.out.println("Cash:" + cash.getCashTendered());
+            System.out.println("Cash: " + cash.getCashTendered());
         }
         if (check != null){
-            System.out.println("Check" + check.getAmount());
+            System.out.println("Check: " + check.getAmount());
         }
         if (credit != null){
-            System.out.println("Credit" + credit.getAmount());
+            System.out.println("Credit: " + credit.getAmount());
         }
         System.out.println("\nPurchase List\n");
         System.out.printf("%-10s%-15s%-10s%-15s%-10s%n", "Juice No.", "Name", "Quantity", "Unit Price", "Unit Weight(kg)");
@@ -140,7 +141,11 @@ public class Order implements Serializable{
         int quantity;
         String conOrder;
         do {
-            System.out.println("Input juice No.:");
+            System.out.println("Input juice No. from the index:");
+            System.out.printf("%-5s%-15s\n", "No.", "Name");
+            for (Item i: OrderDetail.getList()){
+                System.out.printf("%-5s%-15s\n", i.getJuiceNo(), i.getDescription());
+            }
             juiceNo = CheckInput.inputInt();
             System.out.println("Input juice quantity:");
             quantity = CheckInput.inputInt();
@@ -156,48 +161,97 @@ public class Order implements Serializable{
     }
 
     void addPayment(){
-        String conPay = null;
+        boolean conPay = true;
+        double amountToPay = calcTotal();
+        double pAmount;  // Amount of a certain payment
+        double cashAmount = 0;
+        double checkAmount = 0;
+        double creditAmount = 0;
+        System.out.println("You have to pay " + amountToPay + " AUD.");
         do {
             System.out.println("Choose your payment:\n1.Cash\n2.Check\n3.Credit");
             int i = CheckInput.inputInt(1,3);
             switch (i){
                 case 1:
                     System.out.println("How much do you want to pay by cash?");
-                    double cashAmount = CheckInput.inputDouble();
+                    pAmount = CheckInput.inputDouble();
+                    if (calcPayment(amountToPay, pAmount)) {
+                        conPay = false;
+                        pAmount = amountToPay; //If the payment amount exceeds the amount to pay.
+                    }
+                    else {
+                        conPay = true;
+                        System.out.println("Continue making payment.");
+                    }
+                    amountToPay -= pAmount;
+                    cashAmount += pAmount;
                     cash = new Cash(cashAmount);
-                    System.out.println("Continue with another payment?(y/n)");
-                    conPay = CheckInput.inputString("n", "y");
                     break;
                 case 2:
                     System.out.println("How much do you want to pay by check?");
-                    double checkAmount = CheckInput.inputDouble();
+                    pAmount = CheckInput.inputDouble();
                     System.out.println("Input the name:");
                     String checkName = CheckInput.inputString();
                     System.out.println("Input the bank ID：");
                     String checkBankID = CheckInput.inputString();
+                    if (calcPayment(amountToPay, pAmount)) {
+                        conPay = false;
+                        pAmount = amountToPay;
+                    }
+                    else {
+                        conPay = true;
+                        System.out.println("Continue making payment.");
+                    }
+                    amountToPay -= pAmount;
+                    checkAmount += pAmount;
                     check = new Check(checkName, checkBankID, checkAmount);
                     check.authorized();
-                    System.out.println("Continue with another payment?(y/n)");
-                    conPay = CheckInput.inputString("n", "y");
                     break;
                 case 3:
                     System.out.println("How much do you want to pay by credit?");
-                    double creditAmount = CheckInput.inputDouble();
+                    pAmount = CheckInput.inputDouble();
                     System.out.println("Input the card number:");
                     String creditCardNumber = CheckInput.inputString();
                     System.out.println("Input the card type:");
                     String creditCardType = CheckInput.inputString();
                     System.out.println("Input the expire date(yy-MM):");
                     String creditExpDate = CheckInput.inputString();
+                    if (calcPayment(amountToPay, pAmount)) {
+                        conPay = false;
+                        pAmount = amountToPay;
+                    }
+                    else {
+                        conPay = true;
+                        System.out.println("Continue making payment.");
+                    }
+                    amountToPay -= pAmount;
+                    creditAmount += pAmount;
                     credit = new Credit(creditCardNumber, creditCardType, creditExpDate, creditAmount);
                     credit.authorized();
-                    System.out.println("Continue with another payment?(y/n)");
-                    conPay = CheckInput.inputString("n", "y");
                     break;
 
             }
         }
-        while (conPay.equals("y"));
+        while (conPay);
+    }
+
+    boolean calcPayment(double amountToPay, double amount){
+        amountToPay -= amount;
+        if (amountToPay > 0){
+            System.out.println("Remaining: " + amountToPay + " AUD.");
+            return false;
+        }
+        else if(amountToPay == 0){
+            System.out.println("Payment completed. Start shipping process.");
+            setStatus("Shipping");
+            return true;
+        }
+        else{
+            System.out.println("Keep the change: " + -amountToPay + " AUD.");
+            System.out.println("Payment completed. Start shipping process.");
+            setStatus("Shipping");
+            return true;
+        }
     }
 }
 
